@@ -10,6 +10,10 @@ class Database:
         self._store = Store('db.json')
         self._store.load()
 
+    def drop_database(self):
+        self._store = Store('db.json')
+        self._store.save()
+
     def add_user(self, user: User):
         result = self.get_user(user.username)
 
@@ -158,3 +162,19 @@ class Database:
                 if key_data[0] == username:
                     tags.append(key_data[1])
             return MESSAGES.ok(tags)
+
+    def delete_tag(self, username: str, tag: str):
+        result = self.get_user(username)
+        if result['code'] == MESSAGES.USER_NOT_FOUND_CODE:
+            return MESSAGES.USER_NOT_FOUND
+
+        tag_value = self.get_tag(username, tag)
+        if tag_value['code'] != MESSAGES.OK_CODE:
+            return MESSAGES.TAG_NOT_FOUND
+        else:
+            result = self._store.delete(f'{username}:{tag}', namespace='files', guard=tag_value['guard'])
+            if result['code'] != MESSAGES.OK_CODE:
+                return result
+
+            self._store.save()
+            return MESSAGES.TAG_DELETED
